@@ -2,43 +2,33 @@
 
 import { useEffect, useRef } from 'react';
 
+const APP_ID = '75166442-887b-47b4-9e69-b0b58441455b';
+
 export default function GiscusBridge() {
-  const ref = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current || ref.current.hasChildNodes()) return;
+    if (!threadRef.current) return;
 
-    const repo = process.env.NEXT_PUBLIC_GISCUS_REPO ?? '';
-    const repoId = process.env.NEXT_PUBLIC_GISCUS_REPO_ID ?? '';
-    const category = process.env.NEXT_PUBLIC_GISCUS_CATEGORY ?? 'General';
-    const categoryId = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID ?? '';
+    threadRef.current.setAttribute('data-host', 'https://cusdis.com');
+    threadRef.current.setAttribute('data-app-id', APP_ID);
+    threadRef.current.setAttribute('data-page-id', 'main');
+    threadRef.current.setAttribute('data-page-url', window.location.href);
+    threadRef.current.setAttribute('data-page-title', '우리들의 운세 아지트');
 
-    if (!repo || !repoId || !categoryId) {
-      // Giscus 미설정 상태: 안내 메시지 표시
-      const placeholder = document.createElement('div');
-      placeholder.className = 'text-center text-purple-400 text-sm py-8';
-      placeholder.textContent = '💬 댓글 기능을 활성화하려면 Giscus를 설정해주세요.';
-      ref.current.appendChild(placeholder);
+    const existing = document.querySelector('script[src="https://cusdis.com/js/cusdis.es.js"]');
+    if (existing) {
+      // 이미 로드된 경우 렌더 함수 재호출
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).CUSDIS?.renderTo(threadRef.current);
       return;
     }
 
     const script = document.createElement('script');
-    script.src = 'https://giscus.app/client.js';
-    script.setAttribute('data-repo', repo);
-    script.setAttribute('data-repo-id', repoId);
-    script.setAttribute('data-category', category);
-    script.setAttribute('data-category-id', categoryId);
-    script.setAttribute('data-mapping', 'pathname');
-    script.setAttribute('data-strict', '0');
-    script.setAttribute('data-reactions-enabled', '1');
-    script.setAttribute('data-emit-metadata', '0');
-    script.setAttribute('data-input-position', 'top');
-    script.setAttribute('data-theme', 'dark_dimmed');
-    script.setAttribute('data-lang', 'ko');
-    script.setAttribute('crossorigin', 'anonymous');
+    script.src = 'https://cusdis.com/js/cusdis.es.js';
     script.async = true;
-
-    ref.current.appendChild(script);
+    script.defer = true;
+    document.body.appendChild(script);
   }, []);
 
   return (
@@ -48,10 +38,10 @@ export default function GiscusBridge() {
           💬 친구들의 반응
         </h3>
         <p className="text-purple-500 text-center text-xs">
-          오늘 운세 어때요? 댓글로 알려주세요!
+          로그인 없이 댓글을 남길 수 있어요!
         </p>
       </div>
-      <div ref={ref} className="giscus" />
+      <div id="cusdis_thread" ref={threadRef} />
     </div>
   );
 }
