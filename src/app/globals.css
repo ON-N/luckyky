@@ -1,29 +1,129 @@
 @import "tailwindcss";
 
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ── Lucky Fortune Design Tokens ── */
 :root {
-  --background: #0D0520;
-  --foreground: #e9d5ff;
+  /* Green ramp */
+  --green-50:  #F3FAF1;
+  --green-100: #E6F5E4;
+  --green-200: #D7F0D4;
+  --green-300: #A9DDB0;
+  --green-400: #6FCF7B;
+  --green-500: #34C759;
+  --green-600: #1F8A4C;
+  --green-700: #155F36;
+
+  /* Cool greens — 平 / 末吉 */
+  --sage-300: #C9D6C4;
+  --sage-500: #8AA59B;
+
+  /* Neutrals */
+  --cloud:     #FFFFFF;
+  --ink:       #0F2A1D;
+  --ink-soft:  #3C5B4E;
+  --ink-mute:  #6F857B;
+  --line:      rgba(31,138,76,0.12);
+  --line-strong: rgba(31,138,76,0.24);
+  --lemon:     #F2E6A3;
+  --cream:     #FFFBEF;
+
+  /* Semantic */
+  --bg:          var(--green-50);
+  --bg-elev:     var(--cloud);
+  --fg:          var(--ink);
+  --fg-soft:     var(--ink-soft);
+  --fg-mute:     var(--ink-mute);
+  --fg-brand:    var(--green-600);
+  --accent:      var(--green-400);
+  --accent-hover: var(--green-500);
+  --accent-press: var(--green-600);
+  --on-accent:   #0A2416;
+
+  /* Grade colors */
+  --grade-daegil:  var(--green-500);
+  --grade-junggil: var(--green-400);
+  --grade-sogil:   var(--green-300);
+  --grade-pyeong:  var(--sage-300);
+  --grade-malgil:  var(--sage-500);
+
+  /* Radii — 말랑 */
+  --radius-xs:   8px;
+  --radius-sm:   14px;
+  --radius-md:   22px;
+  --radius-lg:   32px;
+  --radius-pill: 999px;
+  --radius-blob: 28px 34px 26px 30px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(31,138,76,0.06);
+  --shadow-sm: 0 4px 10px -4px rgba(31,138,76,0.18), 0 2px 4px rgba(31,138,76,0.06);
+  --shadow-md: 0 12px 28px -12px rgba(31,138,76,0.28), 0 4px 10px rgba(31,138,76,0.08);
+  --shadow-lg: 0 24px 48px -16px rgba(31,138,76,0.32), 0 8px 16px rgba(31,138,76,0.10);
+  --shadow-inset: inset 0 1px 2px rgba(31,138,76,0.08);
+  --ring: 0 0 0 3px #fff, 0 0 0 5px rgba(111,207,123,0.55);
+
+  /* Motion */
+  --ease-jelly: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast:   150ms;
+  --dur-base:   220ms;
+  --dur-slow:   420ms;
+
+  /* Type */
+  --font-display: 'Gaegu', 'Jua', 'Noto Serif KR', system-ui, sans-serif;
+  --font-sans:    'Noto Sans KR', system-ui, -apple-system, sans-serif;
 }
 
+/* ── Tailwind v4 theme extension ── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-lk-bg:      #F3FAF1;
+  --color-lk-green-50:  #F3FAF1;
+  --color-lk-green-100: #E6F5E4;
+  --color-lk-green-200: #D7F0D4;
+  --color-lk-green-300: #A9DDB0;
+  --color-lk-green-400: #6FCF7B;
+  --color-lk-green-500: #34C759;
+  --color-lk-green-600: #1F8A4C;
+  --color-lk-green-700: #155F36;
+  --color-lk-sage-300:  #C9D6C4;
+  --color-lk-sage-500:  #8AA59B;
+  --color-lk-ink:       #0F2A1D;
+  --color-lk-ink-soft:  #3C5B4E;
+  --color-lk-ink-mute:  #6F857B;
+  --color-lk-cloud:     #FFFFFF;
 
-  --animate-shimmer: shimmer 2s linear infinite;
-  --animate-float: float 3s ease-in-out infinite;
+  --animate-lk-shimmer: lk-shimmer 2.4s linear infinite;
+  --animate-lk-float:   lk-float 10s ease-in-out infinite;
+  --animate-lk-bounce:  lk-bounce 1s ease-in-out infinite;
+  --animate-lk-pulse:   lk-pulse 2s ease-in-out infinite;
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* ── Keyframes ── */
+@keyframes lk-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes lk-float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50%       { transform: translate(10px, -14px) rotate(6deg); }
+}
+@keyframes lk-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%       { transform: translateY(-6px); opacity: 1; }
+}
+@keyframes lk-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.08); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+/* ── Base ── */
+html, body {
+  background: var(--bg);
+  color: var(--fg);
 }
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }

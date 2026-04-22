@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="body" cx="0.4" cy="0.35" r="0.85">
+      <stop offset="0" stop-color="#EAF9E4"></stop>
+      <stop offset="0.55" stop-color="#B3E4B9"></stop>
+      <stop offset="1" stop-color="#7ECC87"></stop>
+    </radialGradient>
+    <radialGradient id="cheekG" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFB3C1" stop-opacity="0.85"></stop>
+      <stop offset="1" stop-color="#FFB3C1" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="shine" cx="0.3" cy="0.25" r="0.45">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7"></stop>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+  
+  <ellipse cx="100" cy="182" rx="52" ry="8" fill="#1F8A4C" opacity="0.13"></ellipse>
+  
+  <path d="M100 30&#xA;           C 152 30 172 66 170 104&#xA;           C 168 142 142 172 100 172&#xA;           C 58 172 32 142 30 104&#xA;           C 28 66 48 30 100 30 Z" fill="url(#body)"></path>
+  
+  <ellipse cx="72" cy="66" rx="34" ry="20" fill="url(#shine)"></ellipse>
+  
+  <g transform="translate(100 26)">
+    <path d="M-1 2 Q-2 -8 0 -16" stroke="#3EA856" stroke-width="3" stroke-linecap="round" fill="none"></path>
+    <ellipse cx="-7" cy="-6" rx="8" ry="5" fill="#8ED89A" transform="rotate(-30 -7 -6)"></ellipse>
+    <ellipse cx="7" cy="-6" rx="8" ry="5" fill="#8ED89A" transform="rotate(30 7 -6)"></ellipse>
+    <ellipse cx="-6" cy="-7" rx="3" ry="1.6" fill="#FFFFFF" opacity="0.55" transform="rotate(-30 -6 -7)"></ellipse>
+  </g>
+  
+  <g>
+    <ellipse cx="78" cy="102" rx="7" ry="8" fill="#16341F"></ellipse>
+    <ellipse cx="127" cy="102" rx="7" ry="8" fill="#16341F"></ellipse>
+    <circle cx="80" cy="99" r="2.4" fill="#fff"></circle>
+    <circle cx="129" cy="99" r="2.4" fill="#fff"></circle>
+    <circle cx="76" cy="105" r="1.2" fill="#fff" opacity="0.8"></circle>
+    <circle cx="125" cy="105" r="1.2" fill="#fff" opacity="0.8"></circle>
+  </g>
+  
+  <circle cx="66" cy="120" r="9" fill="url(#cheekG)"></circle>
+  <circle cx="138" cy="120" r="9" fill="url(#cheekG)"></circle>
+  
+  <path d="M92 124 Q102 132 112 124" stroke="#16341F" stroke-width="3" stroke-linecap="round" fill="none"></path>
+  
+  <path d="M99 127 Q102 132 105 127 Q102 131 99 127 Z" fill="#FF99A6" opacity="0.9"></path>
+  
+  <g fill="#FFE98A">
+    <circle cx="44" cy="60" r="3"></circle>
+    <circle cx="160" cy="132" r="3"></circle>
+    <circle cx="54" cy="148" r="2"></circle>
+  </g>
+</svg>

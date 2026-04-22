@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" width="160" height="48">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6FCF7B"></stop>
+      <stop offset="1" stop-color="#34C759"></stop>
+    </linearGradient>
+  </defs>
+  
+  <g transform="translate(8,4) scale(0.9)">
+    <g fill="url(#g)">
+      <path d="M22 4c4 0 7 3 7 7 0 3-2 5-4 6 2 1 4 3 4 6 0 4-3 7-7 7s-7-3-7-7c0-3 2-5 4-6-2-1-4-3-4-6 0-4 3-7 7-7z" opacity="0"></path>
+      
+      <ellipse cx="22" cy="10" rx="7" ry="9" transform="rotate(-20 22 10)"></ellipse>
+      <ellipse cx="30" cy="22" rx="9" ry="7" transform="rotate(20 30 22)"></ellipse>
+      <ellipse cx="22" cy="34" rx="7" ry="9" transform="rotate(-20 22 34)"></ellipse>
+      <ellipse cx="14" cy="22" rx="9" ry="7" transform="rotate(20 14 22)"></ellipse>
+      <circle cx="22" cy="22" r="3" fill="#1F8A4C"></circle>
+    </g>
+    <path d="M22 36 Q21 40 20 44" stroke="#1F8A4C" stroke-width="2" stroke-linecap="round" fill="none"></path>
+  </g>
+  
+  <g font-family="Gaegu, &#39;Noto Serif KR&#39;, serif" font-weight="700" fill="#1F8A4C">
+    <text x="54" y="28" font-size="22">운세</text>
+    <text x="94" y="28" font-size="22" fill="#6FCF7B">아지트</text>
+  </g>
+  <text x="54" y="42" font-family="Noto Sans KR, sans-serif" font-size="9" fill="#6F857B">today&#39;s luck, softly</text>
+</svg>

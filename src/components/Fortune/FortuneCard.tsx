@@ -1,152 +1,222 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Transition } from 'framer-motion';
 import { Fortune } from '@/types';
-import { GRADE_CONFIG } from '@/data/fortunes';
 
 interface FortuneCardProps {
   fortune: Fortune;
   userName: string;
 }
 
+const GRADE_STYLE: Record<string, { bg: string; fg: string; shimmer?: boolean }> = {
+  '대길': { bg: '#34C759', fg: '#0A2416', shimmer: true },
+  '중길': { bg: '#6FCF7B', fg: '#0A2416' },
+  '소길': { bg: '#A9DDB0', fg: '#155F36' },
+  '평':   { bg: '#C9D6C4', fg: '#155F36' },
+  '말길': { bg: '#8AA59B', fg: '#F3FAF1' },
+};
+
+const GRADE_STARS: Record<string, string> = {
+  '대길': '★★★★★',
+  '중길': '★★★★',
+  '소길': '★★★',
+  '평':   '★★',
+  '말길': '★',
+};
+
 export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [copied, setCopied] = useState(false);
-  const gradeConfig = GRADE_CONFIG[fortune.grade];
+  const [shareHover, setShareHover] = useState(false);
+
+  const gs = GRADE_STYLE[fortune.grade] ?? GRADE_STYLE['평'];
 
   useEffect(() => {
     setIsFlipped(false);
-    const timer = setTimeout(() => setIsFlipped(true), 100);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setIsFlipped(true), 100);
+    return () => clearTimeout(t);
   }, [fortune]);
 
   const handleShare = async () => {
-    const displayName = userName || '나';
-    const shareText = `[우리들의 운세 아지트]\n오늘 ${displayName}의 운세: ${fortune.grade}\n\n${fortune.title}\n${fortune.body}\n\n🍀 행운 아이템: ${fortune.luckyItem}\n🎨 행운 색상: ${fortune.luckyColor}\n🍽️ 행운 음식: ${fortune.luckyFood}\n🔢 행운 숫자: ${fortune.luckyNumber}`;
-
+    const who = userName || '나';
+    const text = `[우리들의 운세 아지트]\n오늘 ${who}의 운세: ${fortune.grade}\n\n${fortune.title}\n${fortune.body}\n\n🍀 행운 아이템: ${fortune.luckyItem}\n🎨 행운 색상: ${fortune.luckyColor}\n🍽️ 행운 음식: ${fortune.luckyFood}\n🔢 행운 숫자: ${fortune.luckyNumber}`;
     try {
-      await navigator.clipboard.writeText(shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
     } catch {
-      // fallback for older browsers
-      const textarea = document.createElement('textarea');
-      textarea.value = shareText;
-      document.body.appendChild(textarea);
-      textarea.select();
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
       document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      document.body.removeChild(ta);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
+  const jellyTransition: Transition = { duration: 0.7, ease: [0.34, 1.56, 0.64, 1] };
+
   return (
-    <div className="w-full max-w-md mx-auto" style={{ perspective: '1000px' }}>
-      <div className="relative w-full" style={{ minHeight: '480px' }}>
-        {/* 카드 앞면 (초기) */}
+    <div style={{ perspective: '1000px', width: '100%' }}>
+      <div style={{ position: 'relative', width: '100%', minHeight: 480 }}>
+
+        {/* ── 카드 앞면 (로딩) ── */}
         <motion.div
-          className="absolute inset-0 rounded-2xl overflow-hidden"
+          style={{
+            position: 'absolute', inset: 0,
+            borderRadius: '28px 34px 26px 30px',
+            overflow: 'hidden',
+            backfaceVisibility: 'hidden',
+            background: 'linear-gradient(135deg, #fff, #E6F5E4)',
+            border: '1px solid var(--line)',
+            boxShadow: 'var(--shadow-md)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: 24,
+          }}
           initial={{ rotateY: 0 }}
           animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{ duration: 0.7, ease: 'easeInOut' }}
-          style={{ backfaceVisibility: 'hidden' }}
+          transition={jellyTransition}
         >
-          <div className="w-full h-full bg-gradient-to-br from-purple-900 to-purple-950 border border-yellow-500/30 rounded-2xl flex flex-col items-center justify-center p-8 shadow-2xl">
-            <div className="text-6xl mb-4 animate-pulse">🔮</div>
-            <p className="text-purple-300 text-lg font-medium">운세를 불러오는 중...</p>
-            <div className="mt-6 flex gap-2">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-yellow-400"
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                />
-              ))}
-            </div>
+          {/* ambient blob */}
+          <div style={{
+            position: 'absolute', top: -20, right: -20,
+            width: 160, height: 160,
+            borderRadius: '64% 36% 58% 42% / 54% 48% 52% 46%',
+            background: 'radial-gradient(circle at 30% 30%, rgba(111,207,123,0.45), rgba(111,207,123,0) 70%)',
+            filter: 'blur(16px)', pointerEvents: 'none',
+          }} />
+          <div style={{ fontSize: 60, animation: 'lk-pulse 2s ease-in-out infinite' }}>🔮</div>
+          <p style={{
+            color: 'var(--fg-brand)', fontSize: 16, fontWeight: 700,
+            fontFamily: 'var(--font-display)', margin: '16px 0 0',
+          }}>
+            운세를 불러오는 중...
+          </p>
+          <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{
+                width: 8, height: 8, borderRadius: 99,
+                background: 'var(--green-400)',
+                animation: `lk-bounce 1s ${i * 0.15}s ease-in-out infinite`,
+              }} />
+            ))}
           </div>
         </motion.div>
 
-        {/* 카드 뒷면 (운세 결과) */}
+        {/* ── 카드 뒷면 (운세 결과) ── */}
         <motion.div
-          className="absolute inset-0 rounded-2xl overflow-hidden"
+          style={{
+            position: 'absolute', inset: 0,
+            borderRadius: '28px 34px 26px 30px',
+            overflow: 'hidden',
+            backfaceVisibility: 'hidden',
+            background: '#fff',
+            border: '1px solid var(--line)',
+            boxShadow: 'var(--shadow-md)',
+            padding: 22,
+          }}
           initial={{ rotateY: -180 }}
           animate={{ rotateY: isFlipped ? 0 : -180 }}
-          transition={{ duration: 0.7, ease: 'easeInOut' }}
-          style={{ backfaceVisibility: 'hidden' }}
+          transition={jellyTransition}
         >
-          <div className={`w-full h-full border rounded-2xl p-6 shadow-2xl backdrop-blur-sm ${gradeConfig.bgColor} ${gradeConfig.borderColor} bg-purple-900/80`}>
-            {/* 등급 배지 */}
-            <div className="flex justify-center mb-4">
-              {fortune.grade === '대길' ? (
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border ${gradeConfig.borderColor} bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 bg-[length:200%_100%] animate-shimmer text-purple-950`}>
-                  {fortune.grade} {gradeConfig.emoji}
-                </span>
-              ) : (
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border ${gradeConfig.borderColor} ${gradeConfig.bgColor} ${gradeConfig.textColor}`}>
-                  {fortune.grade} {gradeConfig.emoji}
-                </span>
-              )}
-            </div>
+          {/* ambient blob */}
+          <div style={{
+            position: 'absolute', top: -30, right: -30,
+            width: 180, height: 180,
+            borderRadius: '64% 36% 58% 42% / 54% 48% 52% 46%',
+            background: 'radial-gradient(circle at 30% 30%, rgba(111,207,123,0.45), rgba(111,207,123,0) 70%)',
+            filter: 'blur(16px)', pointerEvents: 'none',
+          }} />
 
-            {/* 제목 */}
-            <h3 className={`text-center text-xl font-bold mb-3 ${gradeConfig.textColor}`}>
-              {fortune.title}
-            </h3>
-
-            <div className="border-t border-purple-600/30 my-3" />
-
-            {/* 본문 */}
-            <p className="text-purple-100 text-sm leading-relaxed mb-4 text-center">
-              {fortune.body}
-            </p>
-
-            <div className="border-t border-purple-600/30 my-3" />
-
-            {/* 행운 정보 */}
-            <div className="grid grid-cols-2 gap-2 mb-5">
-              <div className="bg-purple-950/50 rounded-xl p-3 text-center">
-                <div className="text-lg mb-1">🍀</div>
-                <div className="text-purple-400 text-xs mb-1">행운 아이템</div>
-                <div className="text-white text-sm font-medium">{fortune.luckyItem}</div>
-              </div>
-              <div className="bg-purple-950/50 rounded-xl p-3 text-center">
-                <div className="text-lg mb-1">🎨</div>
-                <div className="text-purple-400 text-xs mb-1">행운 색상</div>
-                <div className="text-white text-sm font-medium">{fortune.luckyColor}</div>
-              </div>
-              <div className="bg-purple-950/50 rounded-xl p-3 text-center">
-                <div className="text-lg mb-1">🍽️</div>
-                <div className="text-purple-400 text-xs mb-1">행운 음식</div>
-                <div className="text-white text-sm font-medium">{fortune.luckyFood}</div>
-              </div>
-              <div className="bg-purple-950/50 rounded-xl p-3 text-center">
-                <div className="text-lg mb-1">🔢</div>
-                <div className="text-purple-400 text-xs mb-1">행운 숫자</div>
-                <div className={`text-xl font-bold ${gradeConfig.textColor}`}>{fortune.luckyNumber}</div>
-              </div>
-            </div>
-
-            {/* 공유 버튼 */}
-            <button
-              onClick={handleShare}
-              className="w-full bg-purple-800/60 hover:bg-purple-700/70 border border-purple-500/50 text-purple-200 hover:text-white rounded-xl py-3 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              {copied ? (
-                <>
-                  <span>✓</span>
-                  <span>복사됐어요!</span>
-                </>
-              ) : (
-                <>
-                  <span>📋</span>
-                  <span>운세 공유하기</span>
-                </>
-              )}
-            </button>
+          {/* 등급 배지 */}
+          <div style={{ textAlign: 'center', position: 'relative', marginBottom: 12 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 16px', borderRadius: 999,
+              fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
+              background: gs.shimmer
+                ? `linear-gradient(90deg, #34C759, #A9DDB0, #34C759)`
+                : gs.bg,
+              backgroundSize: gs.shimmer ? '200% 100%' : undefined,
+              animation: gs.shimmer ? 'lk-shimmer 2.4s linear infinite' : undefined,
+              color: gs.fg,
+              border: '1px solid rgba(31,138,76,0.18)',
+            }}>
+              {fortune.grade} {GRADE_STARS[fortune.grade]}
+            </span>
           </div>
+
+          {/* 제목 */}
+          <h3 style={{
+            fontFamily: 'var(--font-display)', fontSize: 24,
+            color: 'var(--fg-brand)', textAlign: 'center',
+            margin: '8px 0 10px', fontWeight: 700, position: 'relative',
+          }}>
+            {fortune.title}
+          </h3>
+
+          <div style={{ height: 1, background: 'var(--line)', margin: '6px 0 12px' }} />
+
+          {/* 본문 */}
+          <p style={{
+            color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.7,
+            textAlign: 'center', margin: '0 0 12px',
+            fontFamily: 'var(--font-sans)', position: 'relative',
+          }}>
+            {fortune.body}
+          </p>
+
+          <div style={{ height: 1, background: 'var(--line)', margin: '6px 0 12px' }} />
+
+          {/* 행운 타일 */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr',
+            gap: 8, marginBottom: 14, position: 'relative',
+          }}>
+            {([
+              ['🍀', '행운 아이템', fortune.luckyItem, false],
+              ['🎨', '행운 색상',   fortune.luckyColor, false],
+              ['🍽️', '행운 음식',  fortune.luckyFood,  false],
+              ['🔢', '행운 숫자',   fortune.luckyNumber, true],
+            ] as [string, string, string | number, boolean][]).map(([emoji, label, value, isNum]) => (
+              <div key={label} style={{
+                background: 'var(--green-100)',
+                borderRadius: 18, padding: '10px 8px', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 18, marginBottom: 2 }} aria-hidden>{emoji}</div>
+                <div style={{ fontSize: 10, color: 'var(--ink-soft)', marginBottom: 2 }}>{label}</div>
+                <div style={{
+                  fontSize: isNum ? 22 : 13,
+                  fontWeight: 700,
+                  color: isNum ? 'var(--fg-brand)' : 'var(--ink)',
+                  fontFamily: isNum ? 'var(--font-display)' : 'var(--font-sans)',
+                }}>{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* 공유 버튼 */}
+          <button
+            onClick={handleShare}
+            onMouseEnter={() => setShareHover(true)}
+            onMouseLeave={() => setShareHover(false)}
+            style={{
+              width: '100%', border: 'none',
+              fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 15,
+              padding: '13px 22px', borderRadius: 999,
+              background: shareHover ? 'var(--green-500)' : 'var(--green-400)',
+              color: '#0A2416',
+              cursor: 'pointer',
+              transform: shareHover ? 'translateY(-2px) scale(1.02)' : 'none',
+              boxShadow: shareHover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+              transition: `transform 150ms var(--ease-jelly), background 150ms, box-shadow 150ms`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
+          >
+            {copied ? '✓ 복사됐어요!' : '📋 운세 공유하기'}
+          </button>
         </motion.div>
       </div>
     </div>
