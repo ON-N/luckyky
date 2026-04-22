@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import InputForm from '@/components/Fortune/InputForm';
 import FortuneCard from '@/components/Fortune/FortuneCard';
-import GiscusBridge from '@/components/Comments/GiscusBridge';
 import { useFortune } from '@/hooks/useFortune';
 import { FortuneInput } from '@/types';
 
@@ -152,19 +151,6 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* 댓글 */}
-        <AnimatePresence>
-          {pageState === 'done' && (
-            <motion.div
-              key="comments"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <GiscusBridge />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
