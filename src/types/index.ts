@@ -14,12 +14,18 @@ export interface Fortune {
 export type WuXing = '木' | '火' | '土' | '金' | '水';
 export type WuXingRelation = '생아' | '아생' | '비화' | '아극' | '극아';
 
+export interface ZodiacInfo {
+  name: string;
+  emoji: string;
+}
+
 export interface SajuContext {
   birthWuXing: WuXing;
   todayWuXing: WuXing;
   relation: WuXingRelation;
   birthStem: string;
   todayStem: string;
+  zodiac: ZodiacInfo;
 }
 
 export interface FortuneResult {

@@ -37,3 +37,26 @@ export const RELATION_DESC: Record<WuXingRelation, { title: string; desc: string
   '아극': { title: '내가 오늘을 다스리는 날',   desc: '힘을 쓰는 만큼 소모도 있는 날이에요' },
   '극아': { title: '오늘이 나를 누르는 날',     desc: '기운을 아끼고 신중하게 움직여요' },
 };
+
+export const ZODIAC = [
+  { name: '쥐',    emoji: '🐭' },
+  { name: '소',    emoji: '🐄' },
+  { name: '호랑이', emoji: '🐅' },
+  { name: '토끼',  emoji: '🐰' },
+  { name: '용',    emoji: '🐉' },
+  { name: '뱀',    emoji: '🐍' },
+  { name: '말',    emoji: '🐴' },
+  { name: '양',    emoji: '🐑' },
+  { name: '원숭이', emoji: '🐒' },
+  { name: '닭',    emoji: '🐓' },
+  { name: '개',    emoji: '🐕' },
+  { name: '돼지',  emoji: '🐷' },
+];
+
+export const COMPAT_INFO: Record<WuXingRelation, { score: number; hearts: number; title: string; desc: string }> = {
+  '아생': { score: 88, hearts: 5, title: '베푸는 인연', desc: '한 사람이 다른 사람에게 힘을 주는 상생의 관계예요. 서로 성장하게 해주는 좋은 인연이에요.' },
+  '생아': { score: 88, hearts: 5, title: '받는 인연',   desc: '한 사람이 다른 사람에게 힘을 주는 상생의 관계예요. 든든한 버팀목이 되어주는 인연이에요.' },
+  '비화': { score: 78, hearts: 4, title: '같은 기운의 인연', desc: '두 사람의 기운이 같아 서로를 깊이 이해해요. 편안하고 안정적인 관계예요.' },
+  '아극': { score: 65, hearts: 3, title: '이끄는 인연', desc: '한 사람이 다른 사람에게 영향을 주는 관계예요. 적당한 긴장감이 발전의 원동력이 돼요.' },
+  '극아': { score: 65, hearts: 3, title: '따르는 인연', desc: '한 사람이 다른 사람에게 영향을 주는 관계예요. 자극을 받으며 함께 성장할 수 있어요.' },
+};

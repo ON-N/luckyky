@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, type Transition } from 'framer-motion';
 import { Fortune, SajuContext } from '@/types';
 import { WUXING_BADGE, WUXING_EMOJI, STEM_HANJA, RELATION_DESC } from '@/data/sajuFortunes';
+import { generateFortuneImage } from '@/lib/generateImage';
 
 interface FortuneCardProps {
   fortune: Fortune;
@@ -31,6 +32,8 @@ export default function FortuneCard({ fortune, userName, saju }: FortuneCardProp
   const [isFlipped, setIsFlipped] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareHover, setShareHover] = useState(false);
+  const [imgHover, setImgHover] = useState(false);
+  const [imgLoading, setImgLoading] = useState(false);
 
   const gs = GRADE_STYLE[fortune.grade] ?? GRADE_STYLE['평'];
 
@@ -58,6 +61,28 @@ export default function FortuneCard({ fortune, userName, saju }: FortuneCardProp
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+  };
+
+  const handleSaveImage = async () => {
+    if (imgLoading) return;
+    setImgLoading(true);
+    try {
+      const dataUrl = await generateFortuneImage(fortune, saju, userName);
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], '오늘의운세.png', { type: 'image/png' });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: '오늘의 운세' });
+          return;
+        }
+      }
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = '오늘의운세.png';
+      a.click();
+    } finally {
+      setImgLoading(false);
+    }
   };
 
   const jellyTransition: Transition = { duration: 0.7, ease: [0.34, 1.56, 0.64, 1] };
@@ -145,12 +170,20 @@ export default function FortuneCard({ fortune, userName, saju }: FortuneCardProp
                 position: 'relative',
                 border: `1px solid ${birth.bg}`,
               }}>
-                <div style={{
-                  fontSize: 10, fontWeight: 700, color: 'var(--ink-mute)',
-                  textAlign: 'center', marginBottom: 10,
-                  fontFamily: 'var(--font-sans)', letterSpacing: '0.05em',
-                }}>
-                  오행 분석
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-mute)', fontFamily: 'var(--font-sans)', letterSpacing: '0.05em' }}>
+                    오행 분석
+                  </span>
+                  {saju.zodiac && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700,
+                      padding: '2px 8px', borderRadius: 999,
+                      background: birth.bg, color: birth.fg,
+                      fontFamily: 'var(--font-sans)',
+                    }}>
+                      {saju.zodiac.emoji} {saju.zodiac.name}띠
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                   <div style={{ textAlign: 'center' }}>
@@ -211,25 +244,47 @@ export default function FortuneCard({ fortune, userName, saju }: FortuneCardProp
             ))}
           </div>
 
-          {/* 공유 버튼 */}
-          <button
-            onClick={handleShare}
-            onMouseEnter={() => setShareHover(true)}
-            onMouseLeave={() => setShareHover(false)}
-            style={{
-              width: '100%', border: 'none',
-              fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 15,
-              padding: '13px 22px', borderRadius: 999,
-              background: shareHover ? 'var(--green-500)' : 'var(--green-400)',
-              color: '#0A2416', cursor: 'pointer',
-              transform: shareHover ? 'translateY(-2px) scale(1.02)' : 'none',
-              boxShadow: shareHover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-              transition: 'transform 150ms var(--ease-jelly), background 150ms, box-shadow 150ms',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
-          >
-            {copied ? '✓ 복사됐어요!' : '📋 운세 공유하기'}
-          </button>
+          {/* 버튼 행 */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={handleShare}
+              onMouseEnter={() => setShareHover(true)}
+              onMouseLeave={() => setShareHover(false)}
+              style={{
+                flex: 1, border: 'none',
+                fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 14,
+                padding: '13px 8px', borderRadius: 999,
+                background: shareHover ? 'var(--green-500)' : 'var(--green-400)',
+                color: '#0A2416', cursor: 'pointer',
+                transform: shareHover ? 'translateY(-2px) scale(1.02)' : 'none',
+                boxShadow: shareHover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                transition: 'transform 150ms var(--ease-jelly), background 150ms, box-shadow 150ms',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+              }}
+            >
+              {copied ? '✓ 복사됐어요!' : '📋 텍스트 복사'}
+            </button>
+            <button
+              onClick={handleSaveImage}
+              onMouseEnter={() => setImgHover(true)}
+              onMouseLeave={() => setImgHover(false)}
+              disabled={imgLoading}
+              style={{
+                flex: 1, border: '1.5px solid var(--green-400)',
+                fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 14,
+                padding: '13px 8px', borderRadius: 999,
+                background: imgHover ? 'var(--green-100)' : '#fff',
+                color: 'var(--fg-brand)', cursor: imgLoading ? 'not-allowed' : 'pointer',
+                opacity: imgLoading ? 0.6 : 1,
+                transform: imgHover && !imgLoading ? 'translateY(-2px) scale(1.02)' : 'none',
+                boxShadow: imgHover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                transition: 'transform 150ms var(--ease-jelly), background 150ms, box-shadow 150ms',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+              }}
+            >
+              {imgLoading ? '⏳ 생성 중...' : '🖼 이미지 저장'}
+            </button>
+          </div>
         </motion.div>
 
         {/* ── 카드 앞면 (로딩) — absolute로 뒷면 위에 덮음 ── */}

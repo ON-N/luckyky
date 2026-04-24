@@ -42,6 +42,11 @@ export function getWuXingFromDate(localDateStr: string): WuXing {
   return STEM_TO_WUXING[getStemFromDate(localDateStr)];
 }
 
+// 12지신: (year + 8) % 12, 기준 1984(甲子)=쥐(0) ✓
+export function getZodiacIndex(birthYear: number): number {
+  return ((birthYear + 8) % 12 + 12) % 12;
+}
+
 export function getRelation(mine: WuXing, today: WuXing): WuXingRelation {
   if (mine === today) return '비화';
   if (GENERATES[today] === mine) return '생아';

@@ -3,8 +3,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Fortune, FortuneInput, FortuneResult } from '@/types';
 import { FORTUNES } from '@/data/fortunes';
-import { WUXING_LUCKY } from '@/data/sajuFortunes';
-import { getStemFromDate, getWuXingFromDate, getRelation, relationToGrade } from '@/lib/saju';
+import { WUXING_LUCKY, ZODIAC } from '@/data/sajuFortunes';
+import { getStemFromDate, getWuXingFromDate, getRelation, relationToGrade, getZodiacIndex } from '@/lib/saju';
 
 function hashString(str: string): number {
   let hash = 5381;
@@ -45,6 +45,7 @@ export function useFortune(input: FortuneInput | null): FortuneResult {
       const base = gradePool[s % gradePool.length];
       const lucky = WUXING_LUCKY[birthWuXing];
 
+      const birthYear = parseInt(input.birthday.split('-')[0], 10);
       return {
         fortune: { ...base, luckyItem: lucky.item, luckyColor: lucky.color, luckyFood: lucky.food, luckyNumber: lucky.number },
         seed: s,
@@ -54,6 +55,7 @@ export function useFortune(input: FortuneInput | null): FortuneResult {
           relation,
           birthStem: getStemFromDate(input.birthday),
           todayStem: getStemFromDate(today),
+          zodiac: ZODIAC[getZodiacIndex(birthYear)],
         },
       };
     }
