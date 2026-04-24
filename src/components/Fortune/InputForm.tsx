@@ -9,28 +9,49 @@ interface InputFormProps {
 }
 
 export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
-  const [inputType, setInputType] = useState<'name' | 'birthday'>('name');
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState('');
   const [error, setError] = useState('');
   const [nameFocus, setNameFocus] = useState(false);
+  const [bdFocus, setBdFocus] = useState(false);
   const [hover, setHover] = useState(false);
   const [press, setPress] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (inputType === 'name') {
-      if (!name.trim()) { setError('이름을 입력해주세요.'); return; }
-    } else {
-      if (!birthday) { setError('생년월일을 입력해주세요.'); return; }
+
+    if (!name.trim() && !birthday) {
+      setError('이름 또는 생년월일을 입력해주세요.');
+      return;
+    }
+    if (birthday) {
       const d = new Date(birthday);
       if (isNaN(d.getTime()) || d > new Date()) {
-        setError('올바른 생년월일을 입력해주세요.'); return;
+        setError('올바른 생년월일을 입력해주세요.');
+        return;
       }
     }
-    onSubmit({ name, birthday, inputType });
+
+    onSubmit({ name, birthday });
   };
+
+  const inputBase = (focused: boolean, hasError: boolean): React.CSSProperties => ({
+    width: '100%',
+    boxSizing: 'border-box',
+    fontFamily: 'var(--font-sans)',
+    fontSize: 15,
+    color: 'var(--ink)',
+    background: '#fff',
+    border: `1.5px solid ${hasError ? '#D68A8A' : focused ? 'var(--green-400)' : 'var(--line)'}`,
+    borderRadius: 'var(--radius-md)',
+    padding: '14px 18px',
+    boxShadow: focused
+      ? 'var(--shadow-inset), 0 0 0 4px rgba(111,207,123,0.18)'
+      : 'var(--shadow-inset)',
+    outline: 'none',
+    transition: 'border-color 150ms, box-shadow 150ms',
+  });
 
   return (
     <div style={{
@@ -54,90 +75,35 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
         오늘의 운세를 확인하세요 ✨
       </h2>
 
-      {/* 토글 */}
-      <div style={{
-        display: 'inline-flex',
-        width: '100%',
-        background: 'var(--green-100)',
-        borderRadius: 999,
-        padding: 4,
-        border: '1px solid var(--line)',
-        boxSizing: 'border-box',
-      }}>
-        {(['name', 'birthday'] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => { setInputType(k); setError(''); }}
-            style={{
-              flex: 1,
-              border: 'none',
-              background: inputType === k ? '#fff' : 'transparent',
-              color: inputType === k ? 'var(--fg-brand)' : 'var(--ink-soft)',
-              padding: '10px 0',
-              borderRadius: 999,
-              fontFamily: 'var(--font-sans)',
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: 'pointer',
-              boxShadow: inputType === k ? 'var(--shadow-sm)' : 'none',
-              transition: `all 180ms var(--ease-jelly)`,
-            }}
-          >
-            {k === 'name' ? '이름으로 보기' : '생년월일로 보기'}
-          </button>
-        ))}
-      </div>
-
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {inputType === 'name' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="이름을 입력하세요"
+            placeholder="이름 (선택)"
             maxLength={20}
             onFocus={() => setNameFocus(true)}
             onBlur={() => setNameFocus(false)}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              fontFamily: 'var(--font-sans)',
-              fontSize: 15,
-              color: 'var(--ink)',
-              background: '#fff',
-              border: `1.5px solid ${error ? '#D68A8A' : nameFocus ? 'var(--green-400)' : 'var(--line)'}`,
-              borderRadius: 'var(--radius-md)',
-              padding: '14px 18px',
-              boxShadow: nameFocus
-                ? 'var(--shadow-inset), 0 0 0 4px rgba(111,207,123,0.18)'
-                : 'var(--shadow-inset)',
-              outline: 'none',
-              transition: 'border-color 150ms, box-shadow 150ms',
-            }}
+            style={inputBase(nameFocus, false)}
           />
-        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+            <span style={{ fontSize: 11, color: 'var(--ink-mute)', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}>
+              생년월일 입력 시 오행 분석
+            </span>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+          </div>
           <input
             type="date"
             value={birthday}
             onChange={(e) => setBirthday(e.target.value)}
             max={new Date().toISOString().split('T')[0]}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              fontFamily: 'var(--font-sans)',
-              fontSize: 15,
-              color: 'var(--ink)',
-              background: '#fff',
-              border: `1.5px solid ${error ? '#D68A8A' : 'var(--line)'}`,
-              borderRadius: 'var(--radius-md)',
-              padding: '14px 18px',
-              boxShadow: 'var(--shadow-inset)',
-              outline: 'none',
-              colorScheme: 'light',
-            }}
+            onFocus={() => setBdFocus(true)}
+            onBlur={() => setBdFocus(false)}
+            style={{ ...inputBase(bdFocus, false), colorScheme: 'light' }}
           />
-        )}
+        </div>
 
         {error && (
           <p style={{ color: '#B04040', fontSize: 12, margin: '0 0 0 8px' }}>{error}</p>

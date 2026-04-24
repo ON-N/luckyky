@@ -11,16 +11,27 @@ export interface Fortune {
   luckyNumber: number;
 }
 
+export type WuXing = '木' | '火' | '土' | '金' | '水';
+export type WuXingRelation = '생아' | '아생' | '비화' | '아극' | '극아';
+
+export interface SajuContext {
+  birthWuXing: WuXing;
+  todayWuXing: WuXing;
+  relation: WuXingRelation;
+  birthStem: string;
+  todayStem: string;
+}
+
 export interface FortuneResult {
   fortune: Fortune | null;
   seed: number;
   isLoading: boolean;
+  saju?: SajuContext;
 }
 
 export interface FortuneInput {
   name: string;
   birthday: string;
-  inputType: 'name' | 'birthday';
 }
 
 export interface GradeConfig {

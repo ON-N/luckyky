@@ -3,6 +3,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Fortune, FortuneInput, FortuneResult } from '@/types';
 import { FORTUNES } from '@/data/fortunes';
+import { WUXING_LUCKY } from '@/data/sajuFortunes';
+import { getStemFromDate, getWuXingFromDate, getRelation, relationToGrade } from '@/lib/saju';
 
 function hashString(str: string): number {
   let hash = 5381;
@@ -25,32 +27,43 @@ function getLocalDateString(): string {
 export function useFortune(input: FortuneInput | null): FortuneResult {
   const [isLoading, setIsLoading] = useState(false);
 
-  const fortune = useMemo<Fortune | null>(() => {
-    if (!input) return null;
+  const { fortune, seed, saju } = useMemo<Pick<FortuneResult, 'fortune' | 'seed' | 'saju'>>(() => {
+    if (!input) return { fortune: null, seed: 0 };
 
-    const normalizedInput =
-      input.inputType === 'name'
-        ? input.name.trim()
-        : input.birthday;
+    const today = getLocalDateString();
 
-    if (!normalizedInput) return null;
+    if (input.birthday) {
+      // 일간(日干) 기준 — 출생일 자체의 천간이 "자기 기운"
+      const birthWuXing = getWuXingFromDate(input.birthday);
+      const todayWuXing = getWuXingFromDate(today);
+      const relation = getRelation(birthWuXing, todayWuXing);
+      const grade = relationToGrade(relation);
 
-    const dateString = getLocalDateString();
-    const seedString = `${normalizedInput}::${dateString}`;
-    const seed = hashString(seedString);
-    const index = seed % FORTUNES.length;
+      // 등급 풀에서 (생일 + 이름 + 오늘)로 결정론적 선택 — 이름이 텍스트 다양성에 기여
+      const gradePool = FORTUNES.filter(f => f.grade === grade);
+      const s = hashString(`${input.birthday}::${input.name.trim()}::${today}`);
+      const base = gradePool[s % gradePool.length];
+      const lucky = WUXING_LUCKY[birthWuXing];
 
-    return FORTUNES[index];
-  }, [input]);
+      return {
+        fortune: { ...base, luckyItem: lucky.item, luckyColor: lucky.color, luckyFood: lucky.food, luckyNumber: lucky.number },
+        seed: s,
+        saju: {
+          birthWuXing,
+          todayWuXing,
+          relation,
+          birthStem: getStemFromDate(input.birthday),
+          todayStem: getStemFromDate(today),
+        },
+      };
+    }
 
-  const seed = useMemo<number>(() => {
-    if (!input) return 0;
-    const normalizedInput =
-      input.inputType === 'name' ? input.name.trim() : input.birthday;
-    if (!normalizedInput) return 0;
-    const dateString = getLocalDateString();
-    const seedString = `${normalizedInput}::${dateString}`;
-    return hashString(seedString);
+    // 이름만 입력 — 기존 해시 방식
+    const name = input.name.trim();
+    if (!name) return { fortune: null, seed: 0 };
+
+    const s = hashString(`${name}::${today}`);
+    return { fortune: FORTUNES[s % FORTUNES.length], seed: s };
   }, [input]);
 
   useEffect(() => {
@@ -61,5 +74,5 @@ export function useFortune(input: FortuneInput | null): FortuneResult {
     }
   }, [input]);
 
-  return { fortune, seed, isLoading };
+  return { fortune, seed, isLoading, saju };
 }

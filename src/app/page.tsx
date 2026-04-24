@@ -23,7 +23,7 @@ const CLOVERS = Array.from({ length: 14 }, (_, i) => ({
 export default function Home() {
   const [pageState, setPageState] = useState<PageState>('idle');
   const [input, setInput] = useState<FortuneInput | null>(null);
-  const { fortune, isLoading } = useFortune(input);
+  const { fortune, isLoading, saju } = useFortune(input);
   const mounted = useRef(false);
 
   useEffect(() => { mounted.current = true; }, []);
@@ -38,7 +38,7 @@ export default function Home() {
   };
 
   const displayName = input
-    ? input.inputType === 'name' ? input.name : input.birthday
+    ? (input.name.trim() || input.birthday)
     : '';
 
   return (
@@ -146,7 +146,7 @@ export default function Home() {
               transition={{ duration: 0.4 }}
               style={{ marginBottom: 24 }}
             >
-              <FortuneCard fortune={fortune} userName={displayName} />
+              <FortuneCard fortune={fortune} userName={displayName} saju={saju} />
             </motion.div>
           )}
         </AnimatePresence>

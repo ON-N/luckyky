@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion, type Transition } from 'framer-motion';
-import { Fortune } from '@/types';
+import { Fortune, SajuContext } from '@/types';
+import { WUXING_BADGE, WUXING_EMOJI, STEM_HANJA, RELATION_DESC } from '@/data/sajuFortunes';
 
 interface FortuneCardProps {
   fortune: Fortune;
   userName: string;
+  saju?: SajuContext;
 }
 
 const GRADE_STYLE: Record<string, { bg: string; fg: string; shimmer?: boolean }> = {
@@ -25,7 +27,7 @@ const GRADE_STARS: Record<string, string> = {
   '말길': '★',
 };
 
-export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
+export default function FortuneCard({ fortune, userName, saju }: FortuneCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareHover, setShareHover] = useState(false);
@@ -40,7 +42,10 @@ export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
 
   const handleShare = async () => {
     const who = userName || '나';
-    const text = `[우리들의 운세 아지트]\n오늘 ${who}의 운세: ${fortune.grade}\n\n${fortune.title}\n${fortune.body}\n\n🍀 행운 아이템: ${fortune.luckyItem}\n🎨 행운 색상: ${fortune.luckyColor}\n🍽️ 행운 음식: ${fortune.luckyFood}\n🔢 행운 숫자: ${fortune.luckyNumber}`;
+    const sajuLine = saju
+      ? `\n\n🌿 오행: ${saju.birthStem}(${saju.birthWuXing}) → ${saju.todayStem}(${saju.todayWuXing}) · ${saju.relation}`
+      : '';
+    const text = `[우리들의 운세 아지트]\n오늘 ${who}의 운세: ${fortune.grade}\n\n${fortune.title}\n${fortune.body}${sajuLine}\n\n🍀 행운 아이템: ${fortune.luckyItem}\n🎨 행운 색상: ${fortune.luckyColor}\n🍽️ 행운 음식: ${fortune.luckyFood}\n🔢 행운 숫자: ${fortune.luckyNumber}`;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -59,7 +64,7 @@ export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
 
   return (
     <div style={{ perspective: '1000px', width: '100%' }}>
-      <div style={{ position: 'relative', width: '100%', minHeight: 480 }}>
+      <div style={{ position: 'relative', width: '100%', minHeight: saju ? 620 : 480 }}>
 
         {/* ── 카드 앞면 (로딩) ── */}
         <motion.div
@@ -79,7 +84,6 @@ export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
           animate={{ rotateY: isFlipped ? 180 : 0 }}
           transition={jellyTransition}
         >
-          {/* ambient blob */}
           <div style={{
             position: 'absolute', top: -20, right: -20,
             width: 160, height: 160,
@@ -121,7 +125,6 @@ export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
           animate={{ rotateY: isFlipped ? 0 : -180 }}
           transition={jellyTransition}
         >
-          {/* ambient blob */}
           <div style={{
             position: 'absolute', top: -30, right: -30,
             width: 180, height: 180,
@@ -152,12 +155,12 @@ export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
           <h3 style={{
             fontFamily: 'var(--font-display)', fontSize: 24,
             color: 'var(--fg-brand)', textAlign: 'center',
-            margin: '8px 0 10px', fontWeight: 700, position: 'relative',
+            margin: '0 0 10px', fontWeight: 700, position: 'relative',
           }}>
             {fortune.title}
           </h3>
 
-          <div style={{ height: 1, background: 'var(--line)', margin: '6px 0 12px' }} />
+          <div style={{ height: 1, background: 'var(--line)', margin: '0 0 12px' }} />
 
           {/* 본문 */}
           <p style={{
@@ -168,7 +171,83 @@ export default function FortuneCard({ fortune, userName }: FortuneCardProps) {
             {fortune.body}
           </p>
 
-          <div style={{ height: 1, background: 'var(--line)', margin: '6px 0 12px' }} />
+          {/* 오행 분석 — 생년월일 입력 시에만 표시 */}
+          {saju && (() => {
+            const birth = WUXING_BADGE[saju.birthWuXing];
+            const today = WUXING_BADGE[saju.todayWuXing];
+            const rel = RELATION_DESC[saju.relation];
+            return (
+              <div style={{
+                background: birth.bg + '55',
+                borderRadius: 16,
+                padding: '12px 14px',
+                marginBottom: 12,
+                position: 'relative',
+                border: `1px solid ${birth.bg}`,
+              }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 700, color: 'var(--ink-mute)',
+                  textAlign: 'center', marginBottom: 10,
+                  fontFamily: 'var(--font-sans)', letterSpacing: '0.05em',
+                }}>
+                  오행 분석
+                </div>
+
+                {/* 두 오행 카드 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  {/* 내 기운 */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 9, color: 'var(--ink-mute)', marginBottom: 4, fontFamily: 'var(--font-sans)' }}>내 기운</div>
+                    <div style={{
+                      background: birth.bg, color: birth.fg,
+                      borderRadius: 12, padding: '8px 14px',
+                      border: `1px solid ${birth.fg}22`,
+                    }}>
+                      <div style={{ fontSize: 20, lineHeight: 1 }}>{WUXING_EMOJI[saju.birthWuXing]}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-display)', marginTop: 4 }}>
+                        {STEM_HANJA[saju.birthStem]} {saju.birthStem}
+                      </div>
+                      <div style={{ fontSize: 10, fontFamily: 'var(--font-sans)', marginTop: 2, opacity: 0.8 }}>
+                        {saju.birthWuXing}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 16, color: 'var(--ink-mute)', lineHeight: 1 }}>→</div>
+
+                  {/* 오늘 기운 */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 9, color: 'var(--ink-mute)', marginBottom: 4, fontFamily: 'var(--font-sans)' }}>오늘 기운</div>
+                    <div style={{
+                      background: today.bg, color: today.fg,
+                      borderRadius: 12, padding: '8px 14px',
+                      border: `1px solid ${today.fg}22`,
+                    }}>
+                      <div style={{ fontSize: 20, lineHeight: 1 }}>{WUXING_EMOJI[saju.todayWuXing]}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-display)', marginTop: 4 }}>
+                        {STEM_HANJA[saju.todayStem]} {saju.todayStem}
+                      </div>
+                      <div style={{ fontSize: 10, fontFamily: 'var(--font-sans)', marginTop: 2, opacity: 0.8 }}>
+                        {saju.todayWuXing}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 관계 설명 */}
+                <div style={{ textAlign: 'center', marginTop: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: birth.fg, fontFamily: 'var(--font-sans)' }}>
+                    {rel.title}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-mute)', marginTop: 2, fontFamily: 'var(--font-sans)' }}>
+                    {rel.desc}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ height: 1, background: 'var(--line)', margin: '0 0 12px' }} />
 
           {/* 행운 타일 */}
           <div style={{
