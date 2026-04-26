@@ -8,6 +8,12 @@ interface InputFormProps {
   isLoading: boolean;
 }
 
+function parseBirthday(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length !== 8) return null;
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+}
+
 export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState('');
@@ -26,14 +32,20 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
       return;
     }
     if (birthday) {
-      const d = new Date(birthday);
+      const parsed = parseBirthday(birthday);
+      if (!parsed) {
+        setError('생년월일 8자리를 입력해주세요 (예: 20000105)');
+        return;
+      }
+      const d = new Date(parsed);
       if (isNaN(d.getTime()) || d > new Date()) {
         setError('올바른 생년월일을 입력해주세요.');
         return;
       }
+      onSubmit({ name, birthday: parsed });
+      return;
     }
-
-    onSubmit({ name, birthday });
+    onSubmit({ name, birthday: '' });
   };
 
   const inputBase = (focused: boolean, hasError: boolean): React.CSSProperties => ({
@@ -95,14 +107,19 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
           </div>
           <input
-            type="date"
+            type="text"
+            inputMode="numeric"
             value={birthday}
-            onChange={(e) => setBirthday(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+            onChange={(e) => setBirthday(e.target.value.replace(/\D/g, '').slice(0, 8))}
+            placeholder="20000105"
+            maxLength={8}
             onFocus={() => setBdFocus(true)}
             onBlur={() => setBdFocus(false)}
-            style={{ ...inputBase(bdFocus, false), colorScheme: 'light' }}
+            style={inputBase(bdFocus, false)}
           />
+          <div style={{ fontSize: 10, color: 'var(--ink-mute)', fontFamily: 'var(--font-sans)', textAlign: 'center' }}>
+            예: 20000105 = 2000년 01월 05일
+          </div>
         </div>
 
         {error && (

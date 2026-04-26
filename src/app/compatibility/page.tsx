@@ -30,25 +30,33 @@ export default function CompatibilityPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const parseBd = (raw: string): string | null => {
+    const d = raw.replace(/\D/g, '');
+    if (d.length !== 8) return null;
+    return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+  };
+
   const handleCheck = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!a.birthday || !b.birthday) { setError('두 분의 생년월일을 모두 입력해주세요.'); return; }
-    const da = new Date(a.birthday), db = new Date(b.birthday);
+    const pa = parseBd(a.birthday), pb = parseBd(b.birthday);
+    if (!pa || !pb) { setError('생년월일 8자리를 입력해주세요 (예: 20000105)'); return; }
+    const da = new Date(pa), db = new Date(pb);
     if (isNaN(da.getTime()) || isNaN(db.getTime()) || da > new Date() || db > new Date()) {
       setError('올바른 생년월일을 입력해주세요.'); return;
     }
 
     setIsLoading(true);
     setTimeout(() => {
-      const wx1 = getWuXingFromDate(a.birthday);
-      const wx2 = getWuXingFromDate(b.birthday);
-      const y1 = parseInt(a.birthday.split('-')[0], 10);
-      const y2 = parseInt(b.birthday.split('-')[0], 10);
+      const wx1 = getWuXingFromDate(pa);
+      const wx2 = getWuXingFromDate(pb);
+      const y1 = parseInt(pa.split('-')[0], 10);
+      const y2 = parseInt(pb.split('-')[0], 10);
       setResult({
         wx1, wx2,
-        stem1: getStemFromDate(a.birthday),
-        stem2: getStemFromDate(b.birthday),
+        stem1: getStemFromDate(pa),
+        stem2: getStemFromDate(pb),
         zodiac1: ZODIAC[getZodiacIndex(y1)],
         zodiac2: ZODIAC[getZodiacIndex(y2)],
         relation: getRelation(wx1, wx2),
@@ -111,9 +119,13 @@ export default function CompatibilityPage() {
                 <input type="text" value={state.name} placeholder="이름 (선택)"
                   maxLength={20} onChange={(e) => setState(s => ({ ...s, name: e.target.value }))}
                   style={inputStyle} />
-                <input type="date" value={state.birthday} max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setState(s => ({ ...s, birthday: e.target.value }))}
-                  style={{ ...inputStyle, colorScheme: 'light' }} />
+                <input type="text" inputMode="numeric" value={state.birthday}
+                  placeholder="20000105" maxLength={8}
+                  onChange={(e) => setState(s => ({ ...s, birthday: e.target.value.replace(/\D/g, '').slice(0, 8) }))}
+                  style={inputStyle} />
+                <div style={{ fontSize: 10, color: 'var(--ink-mute)', fontFamily: 'var(--font-sans)', textAlign: 'center' }}>
+                  예: 20000105
+                </div>
               </div>
             ))}
           </div>

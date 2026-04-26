@@ -68,14 +68,35 @@ export default function FortuneCard({ fortune, userName, saju }: FortuneCardProp
     setImgLoading(true);
     try {
       const dataUrl = await generateFortuneImage(fortune, saju, userName);
+      const blob = await (await fetch(dataUrl)).blob();
+
+      // Mobile: Web Share API (shares the file directly)
       if (typeof navigator !== 'undefined' && navigator.share) {
-        const blob = await (await fetch(dataUrl)).blob();
         const file = new File([blob], '오늘의운세.png', { type: 'image/png' });
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ files: [file], title: '오늘의 운세' });
           return;
         }
       }
+
+      // Desktop: File System Access API (folder picker)
+      if (typeof window !== 'undefined' && 'showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as Window & { showSaveFilePicker: (opts: object) => Promise<FileSystemFileHandle> }).showSaveFilePicker({
+            suggestedName: '오늘의운세.png',
+            types: [{ description: 'PNG 이미지', accept: { 'image/png': ['.png'] } }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        } catch (err) {
+          if ((err as DOMException).name === 'AbortError') return;
+          // fall through to <a> download
+        }
+      }
+
+      // Fallback: anchor download
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = '오늘의운세.png';

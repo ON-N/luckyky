@@ -2,7 +2,9 @@ import type { Fortune, SajuContext } from '@/types';
 import { WUXING_EMOJI, STEM_HANJA, RELATION_DESC, WUXING_BADGE } from '@/data/sajuFortunes';
 
 const W = 750;
-const PAD = 50;
+const PAD = 48;
+const HEADER_H = 268;
+const LINE_H = 32;
 
 function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
@@ -18,19 +20,27 @@ function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   ctx.closePath();
 }
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, maxW: number, lh: number): number {
+function measureLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const lines: string[] = [];
   let line = '';
   for (const ch of text) {
     const test = line + ch;
     if (ctx.measureText(test).width > maxW && line.length > 0) {
-      ctx.fillText(line, cx, y);
+      lines.push(line);
       line = ch;
-      y += lh;
     } else {
       line = test;
     }
   }
-  if (line) ctx.fillText(line, cx, y);
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawLines(ctx: CanvasRenderingContext2D, lines: string[], cx: number, y: number, lh: number): number {
+  for (const line of lines) {
+    ctx.fillText(line, cx, y);
+    y += lh;
+  }
   return y;
 }
 
@@ -65,160 +75,183 @@ export async function generateFortuneImage(
 ): Promise<string> {
   await document.fonts.ready;
 
-  // 높이 계산: saju 있으면 더 길게
-  const H = saju ? 1280 : 1020;
+  // Measure body text lines with a probe canvas
+  const probe = document.createElement('canvas');
+  probe.width = W;
+  const pc = probe.getContext('2d')!;
+  pc.font = `22px "Noto Sans KR", sans-serif`;
+  const bodyLines = measureLines(pc, fortune.body, W - PAD * 2 - 20);
+  const bodyTextH = bodyLines.length * LINE_H;
 
+  // Calculate total canvas height
+  let calcY = HEADER_H + 48;         // header + top padding
+  calcY += 50;                        // title
+  calcY += 28;                        // post-divider
+  calcY += bodyTextH + 36;            // body text section
+  if (saju) calcY += 220;             // ohaeng section (196 bg + 24 gap)
+  calcY += 24;                        // pre-lucky divider
+  calcY += 2 * (104 + 16);           // lucky grid 2 rows (matches drawing advance)
+  calcY += 56;                        // footer: text at +28, bottom margin +28
+
+  const H = calcY;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
 
-  // 배경
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-  bgGrad.addColorStop(0, '#FFFFFF');
-  bgGrad.addColorStop(1, '#E6F5E4');
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
 
-  // 우상단 ambient blob
-  const blobGrad = ctx.createRadialGradient(W - 60, 60, 0, W - 60, 60, 200);
-  blobGrad.addColorStop(0, 'rgba(111,207,123,0.3)');
-  blobGrad.addColorStop(1, 'rgba(111,207,123,0)');
-  ctx.fillStyle = blobGrad;
+  // === HEADER: dark green gradient ===
+  const hg = ctx.createLinearGradient(0, 0, W * 0.7, HEADER_H);
+  hg.addColorStop(0, '#0A2416');
+  hg.addColorStop(0.55, '#155F36');
+  hg.addColorStop(1, '#1F8A4C');
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, 0, W, HEADER_H);
+
+  // Ambient glow – top-right
+  const ag1 = ctx.createRadialGradient(W - 20, 20, 0, W - 20, 20, 210);
+  ag1.addColorStop(0, 'rgba(111,207,123,0.32)');
+  ag1.addColorStop(1, 'rgba(111,207,123,0)');
+  ctx.fillStyle = ag1;
   ctx.beginPath();
-  ctx.arc(W - 60, 60, 200, 0, Math.PI * 2);
+  ctx.arc(W - 20, 20, 210, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.textAlign = 'center';
-  let y = 64;
+  // Ambient glow – bottom-left
+  const ag2 = ctx.createRadialGradient(50, HEADER_H, 0, 50, HEADER_H, 130);
+  ag2.addColorStop(0, 'rgba(111,207,123,0.22)');
+  ag2.addColorStop(1, 'rgba(111,207,123,0)');
+  ctx.fillStyle = ag2;
+  ctx.beginPath();
+  ctx.arc(50, HEADER_H, 130, 0, Math.PI * 2);
+  ctx.fill();
 
-  // 앱 헤더
-  ctx.font = 'bold 28px "Gaegu", cursive';
-  ctx.fillStyle = '#155F36';
-  ctx.fillText('🍀 우리들의 운세 아지트', W / 2, y);
-  y += 36;
+  // App name
+  ctx.font = 'bold 27px "Gaegu", cursive';
+  ctx.fillStyle = 'rgba(255,255,255,0.93)';
+  ctx.fillText('🍀 우리들의 운세 아지트', W / 2, 68);
 
-  ctx.font = '20px "Noto Sans KR", sans-serif';
-  ctx.fillStyle = '#6F857B';
+  // Date + user
+  ctx.font = '19px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(169,221,176,0.85)';
   const who = userName.trim();
-  ctx.fillText(`${localDateDisplay()}${who ? '  ·  ' + who : ''}`, W / 2, y);
-  y += 30;
+  ctx.fillText(`${localDateDisplay()}${who ? '  ·  ' + who : ''}`, W / 2, 103);
 
-  divider(ctx, y); y += 36;
-
-  // 등급 배지
-  const badgeLabel = `${fortune.grade}  ${GRADE_STARS[fortune.grade]}`;
-  ctx.font = 'bold 26px "Gaegu", cursive';
-  const bw = ctx.measureText(badgeLabel).width + 52;
-  const bh = 46;
+  // Grade badge
+  ctx.font = 'bold 32px "Gaegu", cursive';
+  const badgeText = `${fortune.grade}  ${GRADE_STARS[fortune.grade]}`;
+  const bw = ctx.measureText(badgeText).width + 72;
+  const bh = 58;
   const bx = (W - bw) / 2;
+  const by = 130;
+  rr(ctx, bx, by, bw, bh, bh / 2);
   ctx.fillStyle = GRADE_BG[fortune.grade] ?? '#C9D6C4';
-  rr(ctx, bx, y, bw, bh, bh / 2);
   ctx.fill();
   ctx.fillStyle = GRADE_FG[fortune.grade] ?? '#155F36';
-  ctx.fillText(badgeLabel, W / 2, y + 31);
-  y += bh + 20;
+  ctx.fillText(badgeText, W / 2, by + 40);
 
-  // 띠 (zodiac)
+  // Zodiac (if saju)
   if (saju?.zodiac) {
-    ctx.font = '22px "Noto Sans KR", sans-serif';
-    ctx.fillStyle = '#6F857B';
-    ctx.fillText(`${saju.zodiac.emoji} ${saju.zodiac.name}띠`, W / 2, y);
-    y += 34;
+    ctx.font = '20px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.72)';
+    ctx.fillText(`${saju.zodiac.emoji} ${saju.zodiac.name}띠`, W / 2, by + bh + 30);
   }
 
-  // 운세 제목
+  // === WHITE BODY ===
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, HEADER_H, W, H - HEADER_H);
+
+  let y = HEADER_H + 48;
+
+  // Fortune title
   ctx.font = 'bold 38px "Gaegu", cursive';
   ctx.fillStyle = '#155F36';
   ctx.fillText(fortune.title, W / 2, y);
-  y += 48;
+  y += 50;
 
-  divider(ctx, y); y += 36;
+  divider(ctx, y); y += 28;
 
-  // 운세 본문 (줄바꿈 처리)
-  ctx.font = '23px "Noto Sans KR", sans-serif';
+  // Body text on soft green background
+  const bodyBgH = bodyTextH + 54;
+  rr(ctx, PAD - 8, y - 14, W - (PAD - 8) * 2, bodyBgH, 18);
+  ctx.fillStyle = '#F3FAF1';
+  ctx.fill();
+
+  ctx.font = '22px "Noto Sans KR", sans-serif';
   ctx.fillStyle = '#3C5B4E';
-  y = wrapText(ctx, fortune.body, W / 2, y, W - PAD * 2 - 20, 36) + 36;
+  y = drawLines(ctx, bodyLines, W / 2, y + 8, LINE_H) + 28;
 
-  // 오행 분석
+  // === OHAENG SECTION ===
   if (saju) {
     const birth = WUXING_BADGE[saju.birthWuXing];
     const today = WUXING_BADGE[saju.todayWuXing];
     const rel = RELATION_DESC[saju.relation];
 
-    // 섹션 배경
-    rr(ctx, PAD, y, W - PAD * 2, 180, 20);
-    ctx.fillStyle = birth.bg + '80';
+    const ohaengBgH = 196;
+    rr(ctx, PAD - 8, y, W - (PAD - 8) * 2, ohaengBgH, 20);
+    ctx.fillStyle = birth.bg + '50';
     ctx.fill();
 
-    // 섹션 제목
-    ctx.font = 'bold 16px "Noto Sans KR", sans-serif';
+    ctx.font = 'bold 15px "Noto Sans KR", sans-serif';
     ctx.fillStyle = '#6F857B';
-    ctx.fillText('오행 분석', W / 2, y + 26);
+    ctx.fillText('✦ 오행 분석', W / 2, y + 28);
 
-    // 내 기운 박스
-    const boxW = 190, boxH = 100, gap = 60;
-    const boxY = y + 38;
-    const box1X = (W - boxW * 2 - gap) / 2;
-    const box2X = box1X + boxW + gap;
+    const boxW = 192, boxH = 108, boxGap = 52;
+    const boxY = y + 46;
+    const box1X = (W - boxW * 2 - boxGap) / 2;
+    const box2X = box1X + boxW + boxGap;
 
-    rr(ctx, box1X, boxY, boxW, boxH, 14);
-    ctx.fillStyle = birth.bg;
-    ctx.fill();
+    ([
+      { bx: box1X, badge: birth, stem: saju.birthStem, wx: saju.birthWuXing, label: '내 기운', emoji: WUXING_EMOJI[saju.birthWuXing] },
+      { bx: box2X, badge: today, stem: saju.todayStem, wx: saju.todayWuXing, label: '오늘 기운', emoji: WUXING_EMOJI[saju.todayWuXing] },
+    ] as const).forEach(({ bx, badge, stem, wx, label, emoji }) => {
+      ctx.font = '14px "Noto Sans KR", sans-serif';
+      ctx.fillStyle = '#6F857B';
+      ctx.fillText(label, bx + boxW / 2, boxY - 8);
 
-    rr(ctx, box2X, boxY, boxW, boxH, 14);
-    ctx.fillStyle = today.bg;
-    ctx.fill();
+      rr(ctx, bx, boxY, boxW, boxH, 16);
+      ctx.fillStyle = badge.bg;
+      ctx.fill();
 
-    // 화살표
-    ctx.font = '28px sans-serif';
+      ctx.font = '28px sans-serif';
+      ctx.fillStyle = badge.fg;
+      ctx.fillText(emoji, bx + boxW / 2, boxY + 38);
+
+      ctx.font = 'bold 22px "Gaegu", cursive';
+      ctx.fillStyle = badge.fg;
+      ctx.fillText(`${STEM_HANJA[stem]} ${stem}`, bx + boxW / 2, boxY + 68);
+
+      ctx.font = '15px "Noto Sans KR", sans-serif';
+      ctx.fillStyle = badge.fg;
+      ctx.fillText(wx, bx + boxW / 2, boxY + 90);
+    });
+
+    // Arrow between boxes
+    ctx.font = '30px sans-serif';
     ctx.fillStyle = '#6F857B';
     ctx.fillText('→', W / 2, boxY + boxH / 2 + 10);
 
-    // 박스 텍스트
-    ctx.textAlign = 'center';
-    [
-      { bx: box1X + boxW / 2, stem: saju.birthStem, wx: saju.birthWuXing, fg: birth.fg, emoji: WUXING_EMOJI[saju.birthWuXing], label: '내 기운' },
-      { bx: box2X + boxW / 2, stem: saju.todayStem, wx: saju.todayWuXing, fg: today.fg, emoji: WUXING_EMOJI[saju.todayWuXing], label: '오늘 기운' },
-    ].forEach(({ bx, stem, wx, fg, emoji, label }) => {
-      ctx.font = '14px "Noto Sans KR", sans-serif';
-      ctx.fillStyle = '#6F857B';
-      ctx.fillText(label, bx, boxY - 8);
-
-      ctx.font = '26px sans-serif';
-      ctx.fillStyle = fg;
-      ctx.fillText(emoji, bx, boxY + 34);
-
-      ctx.font = 'bold 20px "Gaegu", cursive';
-      ctx.fillStyle = fg;
-      ctx.fillText(`${STEM_HANJA[stem]} ${stem}`, bx, boxY + 62);
-
-      ctx.font = '15px "Noto Sans KR", sans-serif';
-      ctx.fillStyle = fg;
-      ctx.fillText(wx, bx, boxY + 86);
-    });
-
-    // 관계 설명
-    ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+    // Relation title
+    ctx.font = 'bold 18px "Noto Sans KR", sans-serif';
     ctx.fillStyle = birth.fg;
-    ctx.fillText(rel.title, W / 2, y + 155);
+    ctx.fillText(rel.title, W / 2, boxY + boxH + 22);
 
-    y += 194;
+    y += ohaengBgH + 24;
   }
 
-  divider(ctx, y); y += 30;
+  divider(ctx, y); y += 24;
 
-  // 행운 타일 (2×2)
-  const tileW = 308, tileH = 108, tileGap = 18;
+  // === LUCKY GRID (2×2) ===
+  const tileW = 308, tileH = 104, tileGap = 16;
   const gridX = (W - (tileW * 2 + tileGap)) / 2;
-  const tiles = [
+
+  ([
     { emoji: '🍀', label: '행운 아이템', value: fortune.luckyItem },
     { emoji: '🎨', label: '행운 색상',   value: fortune.luckyColor },
     { emoji: '🍽️', label: '행운 음식',  value: fortune.luckyFood },
     { emoji: '🔢', label: '행운 숫자',   value: String(fortune.luckyNumber) },
-  ];
-
-  tiles.forEach(({ emoji, label, value }, i) => {
+  ] as const).forEach(({ emoji, label, value }, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
     const tx = gridX + col * (tileW + tileGap);
@@ -228,25 +261,26 @@ export async function generateFortuneImage(
     ctx.fillStyle = '#D7F0D4';
     ctx.fill();
 
-    ctx.font = '30px sans-serif';
+    ctx.font = '28px sans-serif';
     ctx.fillStyle = '#0F2A1D';
-    ctx.textAlign = 'center';
-    ctx.fillText(emoji, tx + tileW / 2, ty + 36);
+    ctx.fillText(emoji, tx + tileW / 2, ty + 34);
 
-    ctx.font = '16px "Noto Sans KR", sans-serif';
+    ctx.font = '15px "Noto Sans KR", sans-serif';
     ctx.fillStyle = '#3C5B4E';
-    ctx.fillText(label, tx + tileW / 2, ty + 60);
+    ctx.fillText(label, tx + tileW / 2, ty + 58);
 
-    ctx.font = `bold ${label === '행운 숫자' ? '32px' : '22px'} "${label === '행운 숫자' ? 'Gaegu' : 'Noto Sans KR'}", sans-serif`;
+    const isNum = label === '행운 숫자';
+    ctx.font = `bold ${isNum ? '30px' : '20px'} "${isNum ? 'Gaegu' : 'Noto Sans KR'}", sans-serif`;
     ctx.fillStyle = '#0F2A1D';
     ctx.fillText(value, tx + tileW / 2, ty + 92);
   });
-  y += 2 * (tileH + tileGap) + 30;
 
-  // 푸터
-  ctx.font = '18px "Noto Sans KR", sans-serif';
+  y += 2 * (tileH + tileGap);
+
+  // === FOOTER ===
+  ctx.font = '16px "Noto Sans KR", sans-serif';
   ctx.fillStyle = '#A0B8AE';
-  ctx.fillText('재미로만 즐겨주세요 · 우리들의 운세 아지트 🍀', W / 2, H - 30);
+  ctx.fillText('재미로만 즐겨주세요 · 우리들의 운세 아지트 🍀', W / 2, y + 28);
 
   return canvas.toDataURL('image/png');
 }
