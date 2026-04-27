@@ -74,7 +74,7 @@ export default function FortuneCard({ fortune, userName, saju }: FortuneCardProp
       if (typeof navigator !== 'undefined' && navigator.share) {
         const file = new File([blob], '오늘의운세.png', { type: 'image/png' });
         if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: '오늘의 운세' });
+          await navigator.share({ files: [file] });
           return;
         }
       }
